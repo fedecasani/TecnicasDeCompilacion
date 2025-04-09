@@ -11,11 +11,11 @@ import org.antlr.v4.runtime.tree.ParseTreeVisitor;
  */
 public interface MiLenguajeVisitor<T> extends ParseTreeVisitor<T> {
 	/**
-	 * Visit a parse tree produced by {@link MiLenguajeParser#program}.
+	 * Visit a parse tree produced by {@link MiLenguajeParser#programa}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitProgram(MiLenguajeParser.ProgramContext ctx);
+	T visitPrograma(MiLenguajeParser.ProgramaContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link MiLenguajeParser#token}.
 	 * @param ctx the parse tree

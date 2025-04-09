@@ -16,13 +16,13 @@ public class MiLenguajeBaseListener implements MiLenguajeListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterProgram(MiLenguajeParser.ProgramContext ctx) { }
+	@Override public void enterPrograma(MiLenguajeParser.ProgramaContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitProgram(MiLenguajeParser.ProgramContext ctx) { }
+	@Override public void exitPrograma(MiLenguajeParser.ProgramaContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

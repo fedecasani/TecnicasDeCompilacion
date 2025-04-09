@@ -8,15 +8,15 @@ import org.antlr.v4.runtime.tree.ParseTreeListener;
  */
 public interface MiLenguajeListener extends ParseTreeListener {
 	/**
-	 * Enter a parse tree produced by {@link MiLenguajeParser#program}.
+	 * Enter a parse tree produced by {@link MiLenguajeParser#programa}.
 	 * @param ctx the parse tree
 	 */
-	void enterProgram(MiLenguajeParser.ProgramContext ctx);
+	void enterPrograma(MiLenguajeParser.ProgramaContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link MiLenguajeParser#program}.
+	 * Exit a parse tree produced by {@link MiLenguajeParser#programa}.
 	 * @param ctx the parse tree
 	 */
-	void exitProgram(MiLenguajeParser.ProgramContext ctx);
+	void exitPrograma(MiLenguajeParser.ProgramaContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link MiLenguajeParser#token}.
 	 * @param ctx the parse tree

@@ -1,42 +1,71 @@
 grammar MiLenguaje;
-// Reglas del parser (simplificadas)
-program : token* EOF ;
-token   : ID | INTEGER | STRING | KEYWORD | OPERATOR | SEPARATOR ;
 
-// Lexer rules (reglas léxicas)
-// Identificadores
-ID          : [a-zA-Z][a-zA-Z0-9_]* ;
+// Regla parser mínima (requerida por ANTLR)
+programa : (token)* EOF ;
+token : PA | PC | CA | CC | LA | LC | PYC | COMA | IGUAL | MAYOR | MAYOR_IGUAL 
+      | MENOR | MENOR_IGUAL | EQL | DISTINTO | SUM | RES | MUL | DIV | MOD
+      | OR | AND | NOT | FOR | WHILE | IF | ELSE | INT | CHAR | DOUBLE | VOID
+      | RETURN | ID | INTEGER | DECIMAL | CHARACTER | OTRO 
+      ;
 
-// Literales
-INTEGER     : [0-9]+ ('L'|'l')? ;
-FLOAT       : [0-9]+ '.' [0-9]* ('f'|'F'|'d'|'D')? | '.' [0-9]+ ('f'|'F'|'d'|'D')? | [0-9]+ ('f'|'F'|'d'|'D') ;
-STRING      : '"' (~["\r\n] | '\\"')* '"' ;
-CHAR        : '\'' (~['\r\n\\] | '\\' .) '\'' ;
-BOOLEAN     : 'true' | 'false' ;
-NULL        : 'null' ;
+fragment LETRA : [A-Za-z];
+fragment DIGITO : [0-9];
 
-// Palabras clave básicas de Java
-KEYWORD     : 'class' | 'public' | 'private' | 'protected' | 'static' 
-            | 'void' | 'int' | 'boolean' | 'String' | 'char' | 'float' | 'double'
-            | 'if' | 'else' | 'for' | 'while' | 'do' | 'switch' | 'case' | 'break'
-            | 'return' | 'new' | 'this' | 'super' | 'import' | 'package' ;
+// TOKENS 
+PA   : '(' ;
+PC   : ')' ;
+CA   : '[' ;
+CC   : ']' ;
+LA   : '{' ;
+LC   : '}' ;
 
-// Operadores de Java
-OPERATOR    : '+' | '-' | '*' | '/' | '%'                      // Aritméticos
-            | '=' | '+=' | '-=' | '*=' | '/=' | '%='           // Asignación
-            | '++' | '--'                                      // Incremento/Decremento
-            | '==' | '!=' | '<' | '>' | '<=' | '>='            // Comparación
-            | '&&' | '||' | '!'                                // Lógicos
-            | '&' | '|' | '^' | '~' | '<<' | '>>' | '>>>'      // Bit a bit
-            | '&=' | '|=' | '^=' | '<<=' | '>>=' | '>>>='      // Asignación bit a bit
-            | '?' | ':'                                        // Ternario
-            | 'instanceof'                                     // Tipo
-            ;
+PYC  : ';' ;
+COMA : ',' ;
 
-// Separadores de Java
-SEPARATOR   : ';' | '(' | ')' | '{' | '}' | '[' | ']' | ',' | '.' | '@' ;
+IGUAL : '=' ;
 
-// Ignorar espacios en blanco y comentarios
-WS          : [ \t\r\n]+ -> skip ;
-COMMENT     : '//' ~[\r\n]* -> skip ;
-BLOCK_COMMENT : '/*' .*? '*/' -> skip ;
+MAYOR  : '>' ;
+MAYOR_IGUAL: '>=';
+MENOR  : '<' ;
+MENOR_IGUAL: '<=';
+EQL  : '==';
+DISTINTO  : '!=';
+
+SUM  : '+' ;
+RES  : '-' ;
+MUL  : '*' ;
+DIV  : '/' ;
+MOD  : '%' ;
+
+OR   : '||' ;
+AND  : '&&' ;
+NOT  : '!'  ;
+
+FOR  : 'for';
+WHILE: 'while';
+
+IF   : 'if' ;
+ELSE : 'else' ;
+
+INT     : 'int' ;
+CHAR    : 'char' ;
+DOUBLE  : 'double' ;
+VOID    : 'void' ;
+
+RETURN : 'return';
+
+ID : (LETRA | '_') (LETRA | DIGITO | '_')*;
+
+INTEGER : DIGITO+;
+DECIMAL : INTEGER'.'INTEGER;
+CHARACTER: '\'' (~['\r\n] | '\\' .) '\'' ;
+
+// Comentarios - Se ignoran durante el análisis
+//COMENTARIO_LINEA : '//' ~[\r\n]*; sin ocultar
+COMENTARIO_LINEA : '//' ~[\r\n]* -> skip;
+COMENTARIO_BLOQUE : '/*' .*? '*/' -> skip;
+
+
+HOLA_MUNDO :  '"Hola, mundo!"';
+WS : [ \r\n\t] -> skip ;
+OTRO : . ;

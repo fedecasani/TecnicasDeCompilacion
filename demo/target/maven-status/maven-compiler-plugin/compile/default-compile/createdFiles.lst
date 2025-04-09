@@ -5,6 +5,6 @@ com\compilador\MiLenguajeVisitor.class
 com\compilador\MiLenguajeBaseListener.class
 com\compilador\MiLenguajeBaseVisitor.class
 com\compilador\App.class
-com\compilador\MiLenguajeParser$ProgramContext.class
 com\compilador\MiLenguajeLexer.class
 com\compilador\MiLenguajeListener.class
+com\compilador\MiLenguajeParser$ProgramaContext.class
