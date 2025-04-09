@@ -3,10 +3,7 @@
 ## ⚙️ Configuración Inicial del Proyecto
 
 ### 🏗️ Creación del Proyecto Maven
-
-Para desarrollar nuestro compilador, comenzamos creando la estructura básica del proyecto con **Maven**, que facilitará la gestión de dependencias y el ciclo de vida de construcción.
-
-Ejecutamos el siguiente comando:
+Para desarrollar nuestro compilador, comenzamos creando la estructura básica del proyecto con Maven, que facilitará la gestión de dependencias y el ciclo de vida de construcción.
 
 ```bash
 mvn org.apache.maven.plugins:maven-archetype-plugin:3.1.2:generate \
@@ -17,13 +14,14 @@ mvn org.apache.maven.plugins:maven-archetype-plugin:3.1.2:generate \
     -DartifactId="demo"
 ```
 
-🔧 **Configuraciones durante la ejecución:**  
-- 📦 **groupId**: `com.compilador`  
-- 📂 **artifactId**: `demo`  
-- 🔢 **version**: `1.0`  
-- 📁 **package**: `com.compilador`  
+### 🔧 Configuraciones durante la ejecución:
 
-📌 **Esto genera la siguiente estructura de directorios:**
+- 📦 `groupId`: `com.compilador`  
+- 📂 `artifactId`: `demo`  
+- 🔢 `version`: `1.0`  
+- 📁 `package`: `com.compilador`  
+
+Esto genera la siguiente estructura de directorios:
 
 ```
 📁 demo/
@@ -47,7 +45,7 @@ mvn org.apache.maven.plugins:maven-archetype-plugin:3.1.2:generate \
 
 ### 1️⃣ Modificación del `pom.xml`
 
-📝 **Añadimos las dependencias y plugins necesarios para trabajar con ANTLR:**
+Añadimos las siguientes dependencias y plugins:
 
 ```xml
 <properties>
@@ -114,9 +112,7 @@ mvn org.apache.maven.plugins:maven-archetype-plugin:3.1.2:generate \
 
 ---
 
-### 2️⃣ Creación de la Estructura de Directorios para ANTLR
-
-📂 **Ejecutamos el siguiente comando para crear el directorio donde residirán nuestros archivos de gramática:**
+### 2️⃣ Crear estructura para archivos ANTLR
 
 ```bash
 mkdir -p src/main/antlr4/com/compilador
@@ -124,64 +120,136 @@ mkdir -p src/main/antlr4/com/compilador
 
 ---
 
-### 3️⃣ Creación del Archivo de Gramática ANTLR
-
-📜 **Creamos el archivo `src/main/antlr4/com/compilador/MiniLenguaje.g4` con las reglas léxicas y sintácticas básicas:**
+### 3️⃣ Crear archivo de gramática `MiniLenguaje.g4`
 
 ```antlr
 grammar MiniLenguaje;
 
-// 🖥️ Reglas del parser
 program : token* EOF ;
 token   : ID | INTEGER | STRING | KEYWORD | OPERATOR | SEPARATOR ;
 
-// 🏷️ Reglas léxicas
-
-// Identificadores
 ID          : [a-zA-Z][a-zA-Z0-9_]* ;
-
-// 🔢 Literales
 INTEGER     : [0-9]+ ;
 STRING      : '"' (~["\r\n] | '\"')* '"' ;
 BOOLEAN     : 'true' | 'false' ;
 
-// 🏷️ Palabras clave
 KEYWORD     : 'var' | 'if' | 'else' | 'print' | 'while' | 'function' | 'return' ;
 
-// ➕ Operadores
 OPERATOR    : '+' | '-' | '*' | '/' | '%' | '=' | '==' | '!=' | '<' | '>' | '<=' | '>=' | '&&' | '||' | '!' ;
 
-// 📌 Separadores
 SEPARATOR   : ';' | '(' | ')' | '{' | '}' | ',' | '.' ;
 
-// 🚫 Ignorar espacios en blanco y comentarios
 WS          : [ \t\r\n]+ -> skip ;
 COMMENT     : '//' ~[\r\n]* -> skip ;
 BLOCK_COMMENT : '/*' .*? '*/' -> skip ;
 ```
 
-🎯 **Con esto, tenemos la configuración básica para comenzar el desarrollo del compilador TC25 utilizando Maven y ANTLR. ¡Hora de codear! 🚀🔥**
+---
 
+## 📊 Gramática Léxica Mejorada
 
-## 📝 Ejemplo de Código  
+```antlr
+grammar MiLenguaje;
 
-A continuación, se muestra un **programa de ejemplo** y su salida del **análisis léxico**.  
+programa : (token)* EOF ;
 
-### 📌 Código de entrada  
+token : PA | PC | CA | CC | LA | LC | PYC | COMA | IGUAL | MAYOR | MAYOR_IGUAL 
+      | MENOR | MENOR_IGUAL | EQL | DISTINTO | SUM | RES | MUL | DIV | MOD
+      | OR | AND | NOT | FOR | WHILE | IF | ELSE | INT | CHAR | DOUBLE | VOID
+      | RETURN | ID | INTEGER | DECIMAL | CHARACTER | OTRO ;
 
-```c
-// Este es un programa de ejemplo
-var x = 10;
-var mensaje = "Hola mundo!";
+fragment LETRA : [A-Za-z];
+fragment DIGITO : [0-9];
 
-if (x > 5) {
-    print mensaje;
-}
+PA   : '(' ;
+PC   : ')' ;
+CA   : '[' ;
+CC   : ']' ;
+LA   : '{' ;
+LC   : '}' ;
+
+PYC  : ';' ;
+COMA : ',' ;
+
+IGUAL : '=' ;
+
+MAYOR  : '>' ;
+MAYOR_IGUAL: '>=' ;
+MENOR  : '<' ;
+MENOR_IGUAL: '<=' ;
+EQL  : '==' ;
+DISTINTO  : '!=' ;
+
+SUM  : '+' ;
+RES  : '-' ;
+MUL  : '*' ;
+DIV  : '/' ;
+MOD  : '%' ;
+
+OR   : '||' ;
+AND  : '&&' ;
+NOT  : '!' ;
+
+FOR  : 'for' ;
+WHILE: 'while' ;
+
+IF   : 'if' ;
+ELSE : 'else' ;
+
+INT     : 'int' ;
+CHAR    : 'char' ;
+DOUBLE  : 'double' ;
+VOID    : 'void' ;
+
+RETURN : 'return' ;
+
+ID : (LETRA | '_') (LETRA | DIGITO | '_')* ;
+
+INTEGER : DIGITO+ ;
+DECIMAL : INTEGER '.' INTEGER ;
+CHARACTER: '\'' (~['\r\n] | '\\' .) '\'' ;
+
+COMENTARIO_LINEA : '//' ~[\r\n]* -> skip ;
+COMENTARIO_BLOQUE : '/*' .*? '*/' -> skip ;
+
+WS : [ \r\n\t] -> skip ;
+OTRO : . ;
 ```
 
 ---
 
-### 📊 Salida del Análisis Léxico  
+## 💡 Características añadidas
+
+- 🔡 Soporte para literales de tipo decimal
+- 📝 Soporte para caracteres con comillas simples
+- 🔄 Operadores de comparación extendidos
+- 🧮 Operadores lógicos (`&&`, `||`)
+- 📌 Nuevas palabras clave: `VOID`, `INT`, `CHAR`, `DOUBLE`, `RETURN`
+- 💬 Manejo completo de comentarios
+
+---
+
+## 📝 Ejemplo Actualizado
+
+### 📌 Código de entrada
+
+```java
+// Variables con diferentes tipos de datos
+int numero = 42;
+double pi = 3.14159;
+String mensaje = "Hola, mundo!";
+char letra = 'A';
+boolean condicion = true;
+
+// Estructura de control if-else
+if (numero > 10) {
+    System.out.println(mensaje);
+} else {
+    System.out.println("Número pequeo");
+}
+```
+
+### 📊 Salida del Análisis Léxico
 
 ```
 Análisis léxico completado.
@@ -201,19 +269,90 @@ Análisis léxico completado.
 
 ---
 
-## 🚀 ¡Hora de Compilar y Ejecutar!  
+## 🚀 ¡Hora de Compilar y Ejecutar!
 
-Para compilar el proyecto y probarlo, ejecuta:  
+### 📦 Compilar el proyecto
 
 ```bash
 mvn clean package
 ```
 
-📌 Luego, puedes ejecutar el **JAR generado** con:  
+### ▶️ Ejecutar el compilador
 
 ```bash
 mvn package assembly:single
 java -jar target/demo-1.0-jar-with-dependencies.jar ejemplo.txt   
 java -jar target/demo-1.0-jar-with-dependencies.jar ejemplo_error.txt
 ```
-🔹 **Próximo paso:** Implementar el **análisis sintáctico y semántico** 🛠️✨  
+
+
+## 📤 Salida por Consola del Análisis Léxico
+
+```
+Analizando archivo: ejemplo.txt
+
+=== ANÁLISIS LÉXICO ===
+TIPO                 LEXEMA                         LÍNEA      COLUMNA   
+-------------------------------------------------------------------
+INT                  int                            3          0
+ID                   numero                         3          4
+IGUAL                =                              3          11
+INTEGER              42                             3          13
+PYC                  ;                              3          15
+DOUBLE               double                         4          0
+ID                   pi                             4          7
+IGUAL                =                              4          10
+DECIMAL              3.14159                        4          12
+PYC                  ;                              4          19
+ID                   String                         5          0
+ID                   mensaje                        5          7
+IGUAL                =                              5          15
+HOLA_MUNDO           "Hola, mundo!"                 5          17
+PYC                  ;                              5          31
+CHAR                 char                           6          0
+ID                   letra                          6          5
+IGUAL                =                              6          11        
+CHARACTER            'A'                            6          13
+PYC                  ;                              6          16
+ID                   boolean                        7          0
+ID                   condicion                      7          8
+IGUAL                =                              7          18
+ID                   true                           7          20
+PYC                  ;                              7          24
+IF                   if                             10         0
+PA                   (                              10         3
+ID                   numero                         10         4
+MAYOR                >                              10         11
+INTEGER              10                             10         13
+PC                   )                              10         15        
+LA                   {                              10         17
+ID                   System                         11         4
+OTRO                 .                              11         10
+ID                   out                            11         11
+OTRO                 .                              11         14
+ID                   println                        11         15
+PA                   (                              11         22
+ID                   mensaje                        11         23
+PC                   )                              11         30
+PYC                  ;                              11         31
+LC                   }                              12         0
+ELSE                 else                           12         2
+LA                   {                              12         7
+ID                   System                         13         4
+OTRO                 .                              13         10
+ID                   out                            13         11
+OTRO                 .                              13         14
+ID                   println                        13         15
+PA                   (                              13         22
+OTRO                 "                              13         23
+ID                   N                              13         24
+OTRO                 ú                              13         25
+ID                   mero                           13         26
+ID                   pequeo                         13         31
+OTRO                 "                              13         37
+PC                   )                              13         38
+PYC                  ;                              13         39
+LC                   }                              14         0
+
+? Análisis léxico completado sin errores.
+```
