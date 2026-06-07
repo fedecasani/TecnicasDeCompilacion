@@ -1,214 +1,209 @@
 package com.compilador;
 
-import org.antlr.v4.runtime.*;
-import org.antlr.v4.runtime.tree.*;
-import org.antlr.v4.gui.TreeViewer;
-import javax.swing.*;
-import java.util.Arrays;
+import java.awt.GraphicsEnvironment;
 import java.io.IOException;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import org.antlr.v4.gui.TreeViewer;
+import org.antlr.v4.runtime.BaseErrorListener;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.RecognitionException;
+import org.antlr.v4.runtime.Recognizer;
+import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.tree.ParseTree;
 
-/**
- * Punto de entrada del compilador educativo.
- *
- * Este programa realiza DOS fases del análisis:
- *   1. ANÁLISIS LÉXICO  — convierte el texto en tokens
- *   2. ANÁLISIS SINTÁCTICO — verifica que los tokens forman
- *      estructuras válidas según la gramática
- *
- * Para ejecutar:
- *   java -jar demo-1.0-jar-with-dependencies.jar <archivo.txt>
- */
-public class App {
+public final class App {
+    private static final String VERDE = "\u001B[32m";
+    private static final String AMARILLO = "\u001B[33m";
+    private static final String ROJO = "\u001B[31m";
+    private static final String RESET = "\u001B[0m";
+
+    private App() {}
 
     public static void main(String[] args) {
-        if (args.length != 1) {
-            System.out.println("Uso: java -jar demo-1.0-jar-with-dependencies.jar <archivo.txt>");
+        if (args.length == 0 || args.length > 2) {
+            System.out.println("Uso: java -jar demo-1.0-jar-with-dependencies.jar <archivo.cpp> [--gui]");
             System.exit(1);
         }
+        boolean gui = args.length == 2 && "--gui".equals(args[1]);
+        int salida = compilar(Paths.get(args[0]), gui, System.out, System.err);
+        if (salida != 0) System.exit(salida);
+    }
 
+    public static int compilar(Path archivo, boolean mostrarGui, PrintStream out, PrintStream err) {
         try {
-            // Cargar el archivo de texto como un stream de caracteres
-            CharStream input = CharStreams.fromFileName(args[0]);
-            System.out.println("Analizando archivo: " + args[0]);
-            System.out.println("=".repeat(65));
+            out.println("Iniciando compilacion de: " + archivo.getFileName());
+            out.println(repetir("=", 60));
 
-            // =========================================================
-            //  FASE 1: ANÁLISIS LÉXICO
-            //
-            //  El Lexer lee los caracteres del archivo y los agrupa
-            //  en unidades con significado llamadas TOKENS.
-            //
-            //  Ejemplo:
-            //    "int x = 5 + 3 ;" → [INT] [ID:x] [IGUAL] [INTEGER:5]
-            //                          [SUM] [INTEGER:3] [PYC]
-            // =========================================================
-
+            CharStream input = CharStreams.fromPath(archivo, StandardCharsets.UTF_8);
             MiLenguajeLexer lexer = new MiLenguajeLexer(input);
-
-            // Reemplazamos el manejador de errores por defecto del lexer.
-            // Por defecto ANTLR imprime errores en System.err; aquí los
-            // capturamos para mostrarlos de forma más clara.
             List<String> erroresLexicos = new ArrayList<>();
             lexer.removeErrorListeners();
-            lexer.addErrorListener(new BaseErrorListener() {
-                @Override
-                public void syntaxError(Recognizer<?, ?> recognizer,
-                                        Object offendingSymbol,
-                                        int line, int charPositionInLine,
-                                        String msg, RecognitionException e) {
-                    erroresLexicos.add(
-                        "  [Línea " + line + ":" + charPositionInLine + "] " + msg
-                    );
-                }
-            });
-
-            // fill() ejecuta el lexer y almacena TODOS los tokens en memoria.
-            // Esto nos permite mostrarlos y luego reutilizarlos para el parser.
+            lexer.addErrorListener(listener(erroresLexicos));
             CommonTokenStream tokens = new CommonTokenStream(lexer);
             tokens.fill();
-
-            // Mostrar tabla de tokens
-            System.out.println("\n=== FASE 1: ANÁLISIS LÉXICO ===\n");
-            System.out.printf("  %-20s %-25s %-8s %-8s%n",
-                              "TIPO DE TOKEN", "LEXEMA", "LÍNEA", "COLUMNA");
-            System.out.println("  " + "-".repeat(63));
-
             for (Token token : tokens.getTokens()) {
-                if (token.getType() == Token.EOF) continue;
-
-                String tipo = MiLenguajeLexer.VOCABULARY.getSymbolicName(token.getType());
-                // Si el tipo es null, probablemente es OTRO (char no reconocido)
-                if (tipo == null) tipo = "DESCONOCIDO";
-
-                System.out.printf("  %-20s %-25s %-8d %-8d%n",
-                                  tipo,
-                                  token.getText(),
-                                  token.getLine(),
-                                  token.getCharPositionInLine());
-            }
-
-            // Si hubo errores léxicos, reportar y detener
-            if (!erroresLexicos.isEmpty()) {
-                System.out.println("\n  ❌ ERRORES LÉXICOS:");
-                for (String error : erroresLexicos) {
-                    System.out.println(error);
+                if (token.getType() == MiLenguajeLexer.OTRO) {
+                    erroresLexicos.add(posicion(token) + " caracter no reconocido '" + token.getText() + "'");
                 }
-                System.out.println("\n  El análisis no puede continuar con errores léxicos.");
-                return;
             }
 
-            System.out.println("\n  ✅ Análisis léxico completado sin errores.");
+            out.println("\n=== 1. ANALISIS LEXICO ===");
+            if (!erroresLexicos.isEmpty()) {
+                imprimirMensajes(out, ROJO, "ERRORES LEXICOS", erroresLexicos);
+                return 2;
+            }
+            int cantidadTokens = Math.max(0, tokens.getTokens().size() - 1);
+            exito(out, "Analisis lexico completado sin errores.");
+            out.println("   Tokens procesados: " + cantidadTokens);
 
-            // =========================================================
-            //  FASE 2: ANÁLISIS SINTÁCTICO (PARSING)
-            //
-            //  El Parser recibe los tokens y verifica que forman
-            //  estructuras válidas según las REGLAS de la gramática.
-            //
-            //  Si la estructura es válida, construye un ÁRBOL DE PARSEO
-            //  (Parse Tree) que representa la jerarquía del programa.
-            //
-            //  Ejemplo para "int x = 5 + 3;":
-            //    programa
-            //      sentencia
-            //        declaracion
-            //          tipo: INT
-            //          ID: x
-            //          expresion
-            //            exprAditiva
-            //              exprEntero: 5
-            //              SUM
-            //              exprEntero: 3
-            // =========================================================
-
-            System.out.println("\n=== FASE 2: ANÁLISIS SINTÁCTICO ===\n");
-
-            // El parser necesita leer los tokens desde el principio.
-            // reset() rebobina el stream al token 0.
-            tokens.reset();
-
+            out.println("\n=== 2. ANALISIS SINTACTICO ===");
+            tokens.seek(0);
             MiLenguajeParser parser = new MiLenguajeParser(tokens);
-
-            // Capturar errores sintácticos de forma personalizada
             List<String> erroresSintacticos = new ArrayList<>();
             parser.removeErrorListeners();
-            parser.addErrorListener(new BaseErrorListener() {
-                @Override
-                public void syntaxError(Recognizer<?, ?> recognizer,
-                                        Object offendingSymbol,
-                                        int line, int charPositionInLine,
-                                        String msg, RecognitionException e) {
-                    String tokenErroneo = (offendingSymbol != null)
-                                         ? "'" + offendingSymbol + "'"
-                                         : "fin de archivo";
-                    erroresSintacticos.add(
-                        "  [Línea " + line + ":" + charPositionInLine + "] "
-                        + "cerca de " + tokenErroneo + " → " + msg
-                    );
-                }
-            });
-
-            // Ejecutar el parser desde la REGLA INICIAL 'programa'.
-            // Esta llamada construye el árbol de parseo (o reporta errores).
-            MiLenguajeParser.ProgramaContext arbolParseo = parser.programa();
-
-            // Verificar si hubo errores
+            parser.addErrorListener(listener(erroresSintacticos));
+            MiLenguajeParser.ProgramaContext arbol = parser.programa();
             if (!erroresSintacticos.isEmpty()) {
-                System.out.println("  ❌ ERRORES SINTÁCTICOS:");
-                for (String error : erroresSintacticos) {
-                    System.out.println(error);
-                }
-                System.out.println();
-                System.out.println("  Pista: revisa que cada sentencia:");
-                System.out.println("    - Termine con punto y coma ';'");
-                System.out.println("    - Tenga paréntesis balanceados");
-                System.out.println("    - Use tipos válidos (int, float, string, bool, char, double)");
-                return;
+                imprimirMensajes(out, ROJO, "ERRORES SINTACTICOS", erroresSintacticos);
+                return 3;
+            }
+            exito(out, "Analisis sintactico completado sin errores.");
+            out.println("   Arbol sintactico generado correctamente");
+
+            out.println("\n=== 3. VISUALIZACION DEL AST ===");
+            if (mostrarGui && !GraphicsEnvironment.isHeadless()) {
+                mostrarArbol(arbol, parser);
+                out.println("   Ventana del arbol sintactico abierta");
+            } else {
+                out.println("   Visualizacion omitida (use --gui para abrirla)");
             }
 
-            System.out.println("  ✅ Análisis sintáctico completado sin errores.");
+            out.println("\n=== 4. ANALISIS SEMANTICO ===");
+            ResultadoSemantico semantica = new AnalizadorSemantico().analizar(arbol);
+            out.println("   Tabla de simbolos construida:\n");
+            semantica.getTabla().imprimir(out);
+            if (!semantica.getWarnings().isEmpty()) {
+                imprimirMensajes(out, AMARILLO, "WARNINGS SEMANTICOS", semantica.getWarnings());
+            }
+            if (!semantica.esValido()) {
+                imprimirMensajes(out, ROJO, "ERRORES SEMANTICOS", semantica.getErrores());
+                out.println(ROJO + "\nCompilacion detenida debido a errores semanticos." + RESET);
+                return 4;
+            }
+            exito(out, "Analisis semantico completado sin errores.");
 
-            System.out.println("\n" + "=".repeat(65));
-            System.out.println("  Compilacion exitosa.");
+            out.println("\n=== 5. GENERACION DE CODIGO INTERMEDIO ===");
+            List<String> intermedio = new GeneradorCodigo().generar(arbol);
+            imprimirCodigo(out, intermedio);
+            Path archivoIntermedio = rutaSalida(archivo, "_codigo_intermedio.txt");
+            guardarCodigo(archivoIntermedio, intermedio);
+            exito(out, "Codigo intermedio guardado en: " + archivoIntermedio.getFileName());
 
-            // =========================================================
-            //  VISUALIZADOR GRÁFICO (Swing)
-            //
-            //  TreeViewer es la herramienta de depuración incluida en
-            //  ANTLR4. Abre una ventana Swing con el árbol de parseo
-            //  completo, interactivo y con zoom.
-            //
-            //  Se muestra DESPUÉS de la salida en consola para que
-            //  el alumno pueda leer primero la salida de texto.
-            // =========================================================
+            out.println("\n=== 6. OPTIMIZACION DE CODIGO ===");
+            List<String> optimizado = new Optimizador().optimizar(intermedio);
+            imprimirCodigo(out, optimizado);
+            Path archivoOptimizado = rutaSalida(archivo, "_codigo_optimizado.txt");
+            guardarCodigo(archivoOptimizado, optimizado);
+            int eliminadas = intermedio.size() - optimizado.size();
+            double reduccion = intermedio.isEmpty() ? 0 : eliminadas * 100.0 / intermedio.size();
+            exito(out, "Optimizacion completada.");
+            out.printf("   Instrucciones originales: %d%n", intermedio.size());
+            out.printf("   Instrucciones optimizadas: %d%n", optimizado.size());
+            out.printf("   Reduccion de codigo: %.2f%%%n", reduccion);
+            exito(out, "Codigo optimizado guardado en: " + archivoOptimizado.getFileName());
 
-            System.out.println("\n  Abriendo visualizador grafico del arbol...");
-            mostrarArbol(arbolParseo, parser);
-
+            out.println("\n=== 7. RESUMEN DE COMPILACION ===");
+            out.println("   Archivo procesado: " + archivo.getFileName());
+            out.println("   Tokens analizados: " + cantidadTokens);
+            out.println("   Simbolos en tabla: " + semantica.getTabla().todos().size());
+            out.println("   Instrucciones generadas: " + intermedio.size());
+            out.println("   Instrucciones optimizadas: " + optimizado.size());
+            out.println(VERDE + "\nCOMPILACION Y OPTIMIZACION EXITOSA" + RESET);
+            return 0;
         } catch (IOException e) {
-            System.err.println("❌ No se pudo leer el archivo: " + e.getMessage());
-        } catch (Exception e) {
-            System.err.println("❌ Error inesperado: " + e.getMessage());
-            e.printStackTrace();
+            err.println(ROJO + "No se pudo procesar el archivo: " + e.getMessage() + RESET);
+            return 1;
+        } catch (RuntimeException e) {
+            err.println(ROJO + "Error inesperado: " + e.getMessage() + RESET);
+            e.printStackTrace(err);
+            return 1;
         }
     }
 
-    // =========================================================
-    //  ÁRBOL VISUAL — métodos auxiliares
-    // =========================================================
-    private static void mostrarArbol(ParseTree tree, Parser parser) {
-        JFrame frame = new JFrame("Árbol Sintáctico");
+    private static BaseErrorListener listener(final List<String> errores) {
+        return new BaseErrorListener() {
+            @Override
+            public void syntaxError(Recognizer<?, ?> recognizer, Object simbolo, int linea,
+                                    int columna, String mensaje, RecognitionException error) {
+                errores.add("[linea " + linea + ", columna " + columna + "] " + mensaje);
+            }
+        };
+    }
+
+    private static String posicion(Token token) {
+        return "[linea " + token.getLine() + ", columna " + token.getCharPositionInLine() + "]";
+    }
+
+    private static void imprimirMensajes(PrintStream out, String color, String titulo,
+                                         List<String> mensajes) {
+        out.println(color + "\n" + titulo + ":" + RESET);
+        for (String mensaje : mensajes) out.println(color + "   - " + mensaje + RESET);
+    }
+
+    private static void exito(PrintStream out, String mensaje) {
+        out.println(VERDE + "[OK] " + mensaje + RESET);
+    }
+
+    private static void imprimirCodigo(PrintStream out, List<String> codigo) {
+        out.println("   Codigo de tres direcciones:");
+        for (int i = 0; i < codigo.size(); i++) {
+            out.printf("%3d: %s%n", i, codigo.get(i));
+        }
+    }
+
+    private static Path rutaSalida(Path entrada, String sufijo) {
+        String nombre = entrada.getFileName().toString();
+        int punto = nombre.lastIndexOf('.');
+        String base = punto > 0 ? nombre.substring(0, punto) : nombre;
+        Path padre = entrada.toAbsolutePath().getParent();
+        return padre.resolve(base + sufijo);
+    }
+
+    private static void guardarCodigo(Path archivo, List<String> codigo) throws IOException {
+        List<String> numerado = new ArrayList<>();
+        for (int i = 0; i < codigo.size(); i++) {
+            numerado.add(String.format("%3d: %s", i, codigo.get(i)));
+        }
+        Files.write(archivo, numerado, StandardCharsets.UTF_8);
+    }
+
+    private static String repetir(String texto, int cantidad) {
+        StringBuilder resultado = new StringBuilder();
+        for (int i = 0; i < cantidad; i++) resultado.append(texto);
+        return resultado.toString();
+    }
+
+    private static void mostrarArbol(ParseTree tree, MiLenguajeParser parser) {
+        JFrame frame = new JFrame("Arbol Sintactico");
         JPanel panel = new JPanel();
         TreeViewer viewer = new TreeViewer(Arrays.asList(parser.getRuleNames()), tree);
-        viewer.setScale(1.5);
+        viewer.setScale(1.0);
         panel.add(viewer);
-
-        JScrollPane scrollPane = new JScrollPane(panel);
-        frame.add(scrollPane);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(800, 600);
+        frame.add(new JScrollPane(panel));
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame.setSize(1000, 700);
         frame.setVisible(true);
     }
 }
