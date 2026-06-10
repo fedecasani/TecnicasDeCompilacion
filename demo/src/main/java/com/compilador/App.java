@@ -1,5 +1,8 @@
 package com.compilador;
 
+import com.compilador.optimizaciones.EliminacionCodigoMuertoOptimizacion;
+import com.compilador.optimizaciones.PropagacionConstantesOptimizacion;
+import com.compilador.optimizaciones.SimplificacionExpresionesOptimizacion;
 import java.awt.GraphicsEnvironment;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -28,6 +31,12 @@ public final class App {
     private static final String AMARILLO = "\u001B[33m";
     private static final String ROJO = "\u001B[31m";
     private static final String RESET = "\u001B[0m";
+    // Comente cualquiera de estas lineas para desactivar una optimizacion puntual.
+    private static final Optimizador OPTIMIZADOR = new Optimizador(Arrays.asList(
+            new SimplificacionExpresionesOptimizacion(),
+            new PropagacionConstantesOptimizacion(),
+            new EliminacionCodigoMuertoOptimizacion()
+    ));
 
     private App() {}
 
@@ -112,7 +121,10 @@ public final class App {
             exito(out, "Codigo intermedio guardado en: " + archivoIntermedio.getFileName());
 
             out.println("\n=== 6. OPTIMIZACION DE CODIGO ===");
-            List<String> optimizado = new Optimizador().optimizar(intermedio);
+            out.println("   Optimizaciones activas: " + String.join(", ",
+                    OPTIMIZADOR.nombresOptimizaciones()));
+            out.println("   Para desactivar una, comente su linea en App.java");
+            List<String> optimizado = OPTIMIZADOR.optimizar(intermedio);
             imprimirCodigo(out, optimizado);
             Path archivoOptimizado = rutaSalida(archivo, "_codigo_optimizado.txt");
             guardarCodigo(archivoOptimizado, optimizado);
