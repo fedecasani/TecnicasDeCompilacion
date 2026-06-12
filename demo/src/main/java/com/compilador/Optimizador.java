@@ -19,6 +19,11 @@ public final class Optimizador {
                 new EliminacionCodigoMuertoOptimizacion()));
     }
 
+    // primera simplificación: limpia lo obvio del código original
+    // propagación: mete constantes dentro de otras expresiones
+    // segunda simplificación: aprovecha esas expresiones nuevas para plegarlas
+    // eliminación de código muerto: limpia lo que sobra al final
+
     public Optimizador(List<OptimizacionCodigo> optimizaciones) {
         this.optimizaciones = new ArrayList<>(optimizaciones);
     }
