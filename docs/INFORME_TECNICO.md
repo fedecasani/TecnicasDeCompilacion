@@ -44,6 +44,33 @@ Lexer ANTLR -> tokens -> Parser ANTLR -> arbol sintactico
                                 Optimizador
 ```
 
+Estructura principal del proyecto:
+
+```text
+demo/
+|-- ejemplos/
+|   `-- ejemplo1.cpp
+|-- src/main/antlr4/com/compilador/MiLenguaje.g4
+|-- src/main/java/com/compilador/
+|   |-- App.java
+|   |-- AnalizadorSemantico.java
+|   |-- TablaSimbolos.java
+|   |-- Simbolo.java
+|   |-- ResultadoSemantico.java
+|   |-- GeneradorCodigo.java
+|   |-- Optimizador.java
+|   `-- optimizaciones/
+|       |-- OptimizacionCodigo.java
+|       |-- SimplificacionExpresionesOptimizacion.java
+|       |-- PropagacionConstantesOptimizacion.java
+|       `-- EliminacionCodigoMuertoOptimizacion.java
+|-- src/test/java/com/compilador/AppTest.java
+|-- ejemplo_correcto.cpp
+|-- ejemplo_semantico_error.cpp
+|-- ejemplo_error.txt
+`-- pom.xml
+```
+
 ## Analisis lexico y sintactico
 
 La gramatica `MiLenguaje.g4` contiene reglas combinadas de lexer y parser.
@@ -87,12 +114,13 @@ representan mediante etiquetas `func_<nombre>` y parametros `PARAM`.
 
 ## Optimizaciones
 
-`Optimizador` implementa cuatro transformaciones:
+`Optimizador` coordina tres tecnicas principales agrupadas en el paquete
+`com.compilador.optimizaciones`:
 
-1. Plegado de constantes: `t1 = 5 + 3` pasa a `t1 = 8`.
+1. Simplificacion de expresiones:
+   plegado de constantes y eliminacion de asignaciones redundantes como `x = x`.
 2. Propagacion de constantes dentro de bloques basicos.
-3. Eliminacion de asignaciones redundantes como `x = x`.
-4. Eliminacion de codigo inalcanzable despues de `goto` o `return`.
+3. Eliminacion de codigo inalcanzable despues de `goto` o `return`.
 
 Las barreras de flujo limpian el mapa de constantes para evitar propagar
 valores a traves de llamadas, saltos o etiquetas.
@@ -105,7 +133,8 @@ Las pruebas JUnit verifican:
 - Creacion de ambos archivos de salida.
 - Deteccion de una variable no declarada.
 
-Ademas se incluyen entradas manuales para errores sintacticos y semanticos.
+Ademas se incluyen entradas manuales para errores sintacticos y semanticos,
+y una carpeta `ejemplos/` con programas mas completos para demostracion.
 
 ## Decisiones de diseno
 

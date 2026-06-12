@@ -1,0 +1,36 @@
+  0: // Codigo de tres direcciones generado
+  1: PROGRAMA_INICIO:
+  2: func_main:
+  3: DECLARE numero int
+  4: DECLARE otro int
+  5: DECLARE promedio double
+  6: DECLARE letra char
+  7: numero = 8
+  8: otro = 2
+  9: t1 = numero + otro
+ 10: promedio = t1
+ 11: letra = 'A'
+ 12: t3 = numero > otro
+ 13: t4 = promedio > 0
+ 14: t2 = t3 && t4
+ 15: if t2 goto THEN_1
+ 16: goto ELSE_2
+ 17: THEN_1:
+ 18: t5 = letra == 'A'
+ 19: if t5 goto THEN_4
+ 20: goto ELSE_5
+ 21: THEN_4:
+ 22: t6 = numero + otro
+ 23: numero = t6
+ 24: goto END_IF_6
+ 25: ELSE_5:
+ 26: t7 = numero - otro
+ 27: numero = t7
+ 28: END_IF_6:
+ 29: goto END_IF_3
+ 30: ELSE_2:
+ 31: t8 = numero - 1
+ 32: numero = t8
+ 33: END_IF_3:
+ 34: return numero
+ 35: PROGRAMA_FIN:

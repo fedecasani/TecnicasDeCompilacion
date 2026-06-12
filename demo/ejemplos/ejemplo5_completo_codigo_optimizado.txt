@@ -1,0 +1,86 @@
+  0: // Codigo de tres direcciones generado
+  1: PROGRAMA_INICIO:
+  2: func_dividir:
+  3: PARAM a double
+  4: PARAM b double
+  5: DECLARE resultado double
+  6: t1 = a / b
+  7: resultado = t1
+  8: return resultado
+  9: func_acumular:
+ 10: PARAM limite int
+ 11: DECLARE i int
+ 12: DECLARE suma int
+ 13: i = 0
+ 14: suma = 0
+ 15: WHILE_1:
+ 16: t2 = i < limite
+ 17: if t2 goto WHILE_BODY_2
+ 18: goto END_WHILE_3
+ 19: WHILE_BODY_2:
+ 20: t3 = suma + i
+ 21: suma = t3
+ 22: t4 = i + 1
+ 23: i = t4
+ 24: goto WHILE_1
+ 25: END_WHILE_3:
+ 26: return suma
+ 27: func_ajustar:
+ 28: PARAM valor int
+ 29: DECLARE copia int
+ 30: copia = valor
+ 31: t6 = copia > 5
+ 32: t7 = copia < 20
+ 33: t5 = t6 && t7
+ 34: if t5 goto THEN_4
+ 35: goto ELSE_5
+ 36: THEN_4:
+ 37: t8 = copia + 1
+ 38: copia = t8
+ 39: goto END_IF_6
+ 40: ELSE_5:
+ 41: t9 = copia - 1
+ 42: copia = t9
+ 43: END_IF_6:
+ 44: func_main:
+ 45: DECLARE total int
+ 46: DECLARE indice int
+ 47: DECLARE promedio double
+ 48: DECLARE nivel char
+ 49: CALL func_acumular, 5
+ 50: t10 = RETURN_VALUE
+ 51: total = t10
+ 52: CALL func_dividir, total, 2
+ 53: t11 = RETURN_VALUE
+ 54: promedio = t11
+ 55: nivel = 'C'
+ 56: indice = 0
+ 57: FOR_7:
+ 58: t12 = indice < 4
+ 59: if t12 goto FOR_BODY_8
+ 60: goto END_FOR_10
+ 61: FOR_BODY_8:
+ 62: t13 = total + indice
+ 63: total = t13
+ 64: FOR_STEP_9:
+ 65: t14 = indice + 1
+ 66: indice = t14
+ 67: goto FOR_7
+ 68: END_FOR_10:
+ 69: CALL func_ajustar, total
+ 70: t15 = RETURN_VALUE
+ 71: t17 = promedio > 0
+ 72: t18 = nivel == 'Z'
+ 73: t16 = t17 || t18
+ 74: if t16 goto THEN_11
+ 75: goto ELSE_12
+ 76: THEN_11:
+ 77: t19 = total + 2
+ 78: total = t19
+ 79: goto END_IF_13
+ 80: ELSE_12:
+ 81: t20 = total - 2
+ 82: total = t20
+ 83: END_IF_13:
+ 84: return total
+ 85: PROGRAMA_FIN:

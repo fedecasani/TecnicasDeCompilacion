@@ -18,6 +18,13 @@ demo/target/demo-1.0-jar-with-dependencies.jar
 java -jar target/demo-1.0-jar-with-dependencies.jar archivo.cpp
 ```
 
+Si el archivo se encuentra dentro de la carpeta `ejemplos`, debe indicarse la
+ruta relativa:
+
+```bash
+java -jar target/demo-1.0-jar-with-dependencies.jar ejemplos/ejemplo1.cpp
+```
+
 Agregar `--gui` para abrir el arbol sintactico con Swing:
 
 ```bash
@@ -71,6 +78,17 @@ int main() {
 
 Se soportan `if/else`, `while`, `for`, `break`, `continue`, arrays,
 funciones, llamadas, retornos y expresiones aritmeticas, relacionales y logicas.
+
+## Casos de prueba incluidos
+
+- `ejemplo_correcto.cpp`: programa valido basado en el ejemplo del profesor.
+- `ejemplo_semantico_error.cpp`: caso con errores semanticos y warnings.
+- `ejemplo_error.txt`: caso con errores sintacticos.
+- `ejemplos/ejemplo1.cpp`: ejemplo amplio con funciones, arrays y `cout`.
+- `ejemplos/ejemplo2_basico.cpp`: ejemplo simple con declaraciones y `if/else`.
+- `ejemplos/ejemplo3_funciones.cpp`: ejemplo centrado en funciones y retornos.
+- `ejemplos/ejemplo4_bucles.cpp`: ejemplo centrado en `for`, `while`, `break` y `continue`.
+- `ejemplos/ejemplo5_completo.cpp`: ejemplo combinado para demostracion integral.
 
 ## Solucion de problemas
 

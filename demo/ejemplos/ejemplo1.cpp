@@ -18,7 +18,7 @@ double dividir(double a, double b) {
 }
 
 void mostrarEstado(int valor, bool activo) {
-    if (activo && valor > 0) {
+    if (activo && (valor > 0)) {
         cout << valor << activo;
     } else {
         cout << valor << activo;
@@ -44,6 +44,7 @@ int main() {
     inicial = 'A';
     encontrado = false;
     titulo = "prueba";
+    cout << inicial << titulo;
 
     datos[0] = 10;
     datos[1] = 20;
@@ -75,7 +76,7 @@ int main() {
         total = sumar(total, i);
     }
 
-    if (encontrado || total > 0) {
+    if (encontrado || (total > 0)) {
         mostrarEstado(total, activoGlobal);
     } else {
         cout << total << promedio;
