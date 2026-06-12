@@ -82,7 +82,7 @@ public final class GeneradorCodigo extends MiLenguajeBaseVisitor<String> {
 
     @Override
     public String visitLlamada(MiLenguajeParser.LlamadaContext ctx) {
-        generarLlamada(ctx);
+        emitirLlamada(ctx);
         return null;
     }
 
@@ -185,18 +185,25 @@ public final class GeneradorCodigo extends MiLenguajeBaseVisitor<String> {
     @Override public String visitExprOr(MiLenguajeParser.ExprOrContext ctx) { return binaria(ctx.expresion(0), "||", ctx.expresion(1)); }
     @Override public String visitExprLlamada(MiLenguajeParser.ExprLlamadaContext ctx) { return generarLlamada(ctx.llamada()); }
 
+    private void emitirLlamada(MiLenguajeParser.LlamadaContext ctx) {
+        emitir("CALL func_" + ctx.ID().getText() + argumentosLlamada(ctx));
+    }
+
     private String generarLlamada(MiLenguajeParser.LlamadaContext ctx) {
+        emitirLlamada(ctx);
+        String temp = nuevoTemporal();
+        emitir(temp + " = RETURN_VALUE");
+        return temp;
+    }
+
+    private String argumentosLlamada(MiLenguajeParser.LlamadaContext ctx) {
         List<String> argumentos = new ArrayList<>();
         if (ctx.argumentos() != null) {
             for (MiLenguajeParser.ExpresionContext expresion : ctx.argumentos().expresion()) {
                 argumentos.add(visit(expresion));
             }
         }
-        emitir("CALL func_" + ctx.ID().getText()
-                + (argumentos.isEmpty() ? "" : ", " + String.join(", ", argumentos)));
-        String temp = nuevoTemporal();
-        emitir(temp + " = RETURN_VALUE");
-        return temp;
+        return argumentos.isEmpty() ? "" : ", " + String.join(", ", argumentos);
     }
 
     private String binaria(MiLenguajeParser.ExpresionContext izquierda, String operador,

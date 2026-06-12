@@ -1,5 +1,8 @@
 demo/target/
 demo/*_codigo_intermedio.txt
 demo/*_codigo_optimizado.txt
+demo/ejemplos/*_codigo_intermedio.txt
+demo/ejemplos/*_codigo_optimizado.txt
 .idea/
 *.iml
+.DS_Store

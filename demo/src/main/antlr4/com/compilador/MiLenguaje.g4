@@ -82,14 +82,14 @@ tipo
     ;
 
 expresion
-    : expresion OR expresion                                            # exprOr
-    | expresion AND expresion                                           # exprAnd
-    | expresion (EQL | DISTINTO) expresion                              # exprIgualdad
-    | expresion (MAYOR | MENOR | MAYOR_IGUAL | MENOR_IGUAL) expresion  # exprRelacional
-    | expresion (SUM | RES) expresion                                   # exprAditiva
-    | expresion (MUL | DIV | MOD) expresion                             # exprMultiplicativa
+    : RES expresion                                                     # exprNegativo
     | NOT expresion                                                     # exprNot
-    | RES expresion                                                     # exprNegativo
+    | expresion (MUL | DIV | MOD) expresion                             # exprMultiplicativa
+    | expresion (SUM | RES) expresion                                   # exprAditiva
+    | expresion (MAYOR | MENOR | MAYOR_IGUAL | MENOR_IGUAL) expresion  # exprRelacional
+    | expresion (EQL | DISTINTO) expresion                              # exprIgualdad
+    | expresion AND expresion                                           # exprAnd
+    | expresion OR expresion                                            # exprOr
     | PA expresion PC                                                   # exprAgrupada
     | llamada                                                           # exprLlamada
     | acceso                                                            # exprAcceso

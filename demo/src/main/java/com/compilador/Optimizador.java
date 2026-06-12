@@ -15,6 +15,7 @@ public final class Optimizador {
         this(Arrays.asList(
                 new SimplificacionExpresionesOptimizacion(),
                 new PropagacionConstantesOptimizacion(),
+                new SimplificacionExpresionesOptimizacion(),
                 new EliminacionCodigoMuertoOptimizacion()));
     }
 
