@@ -4,6 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 import org.antlr.v4.runtime.ParserRuleContext;
 
+// Copia de apoyo para examen.
+// Esta version muestra:
+// - donde se declaran simbolos
+// - donde se validan tipos
+// - como registrar una construccion nueva como `importacion`
 public final class AnalizadorSemantico extends MiLenguajeBaseVisitor<String> {
     private final TablaSimbolos tabla = new TablaSimbolos();
     private final ResultadoSemantico resultado = new ResultadoSemantico(tabla);
@@ -29,8 +34,7 @@ public final class AnalizadorSemantico extends MiLenguajeBaseVisitor<String> {
         return resultado;
     }
 
-    // Declara cada funcion en la tabla antes de analizar cuerpos para permitir
-    // llamadas posteriores y detectar duplicados en el ambito global.
+    // Primer pasada: registrar funciones antes de visitar cuerpos.
     private void declararFuncion(MiLenguajeParser.FuncionContext ctx) {
         List<String> parametros = new ArrayList<>();
         if (ctx.parametros() != null) {
@@ -46,13 +50,12 @@ public final class AnalizadorSemantico extends MiLenguajeBaseVisitor<String> {
     }
 
     @Override
-    // Cambia al ambito de la funcion, declara sus parametros y valida semanticamente
-    // todas las sentencias de su bloque.
     public String visitFuncion(MiLenguajeParser.FuncionContext ctx) {
         String anterior = ambito;
         String retornoAnterior = tipoRetorno;
         ambito = ctx.ID().getText();
         tipoRetorno = ctx.tipo().getText();
+
         if (ctx.parametros() != null) {
             for (MiLenguajeParser.ParametroContext parametro : ctx.parametros().parametro()) {
                 Simbolo simbolo = simbolo(parametro.ID().getText(), parametro.tipo().getText(),
@@ -62,28 +65,31 @@ public final class AnalizadorSemantico extends MiLenguajeBaseVisitor<String> {
                 }
             }
         }
+
         visit(ctx.bloque());
         ambito = anterior;
         tipoRetorno = retornoAnterior;
         return null;
     }
 
+    // Ejemplo de agregado semantico para una construccion nueva.
+    // Si no queres tocar Simbolo.java, podrias reemplazar IMPORT por VARIABLE,
+    // aunque queda menos prolijo en la tabla.
     @Override
     public String visitImportacion(MiLenguajeParser.ImportacionContext ctx) {
         String cadena = ctx.CADENA().getText();
         String nombreModulo = cadena.substring(1, cadena.length() - 1);
 
-        Simbolo simbolo = new Simbolo(
+        Simbolo simboloImport = simbolo(
                 nombreModulo,
                 "import",
-                Simbolo.Categoria.RETURN,
-                ctx.getStart().getLine(), //La línea donde apareció en el código.
-                ctx.getStart().getCharPositionInLine(), //La columna.
-                ambito, //En qué scope vive: global, main, sumar, etc.
-                null, //Tamaño de array, solo se usa si es algo como int nums[3];
-                null); //Lista de parámetros, solo se usa si es una función.
+                Simbolo.Categoria.IMPORT,
+                ctx,
+                ambito,
+                null,
+                null);
 
-        if (!tabla.declarar(simbolo)) {
+        if (!tabla.declarar(simboloImport)) {
             error(ctx, "El import '" + nombreModulo + "' ya esta declarado");
         }
 
@@ -91,8 +97,6 @@ public final class AnalizadorSemantico extends MiLenguajeBaseVisitor<String> {
     }
 
     @Override
-    // Registra una variable o array en la tabla y valida que su inicializacion,
-    // si existe, sea compatible con el tipo declarado.
     public String visitDeclaracion(MiLenguajeParser.DeclaracionContext ctx) {
         Integer tamanio = ctx.INTEGER() == null ? null : Integer.valueOf(ctx.INTEGER().getText());
         Simbolo simbolo = simbolo(ctx.ID().getText(), ctx.tipo().getText(),
@@ -109,8 +113,6 @@ public final class AnalizadorSemantico extends MiLenguajeBaseVisitor<String> {
     }
 
     @Override
-    // Verifica que el destino exista, que se use como variable/array valido y
-    // que el tipo de la expresion pueda asignarse al destino.
     public String visitAsignacion(MiLenguajeParser.AsignacionContext ctx) {
         Simbolo destino = resolverAcceso(ctx.acceso(), true);
         String tipoValor = visit(ctx.expresion());
@@ -121,8 +123,6 @@ public final class AnalizadorSemantico extends MiLenguajeBaseVisitor<String> {
     }
 
     @Override
-    // Aplica las mismas validaciones semanticas de una asignacion normal dentro
-    // de la seccion de incremento/paso del for.
     public String visitAsignacionFor(MiLenguajeParser.AsignacionForContext ctx) {
         Simbolo destino = resolverAcceso(ctx.acceso(), true);
         String tipoValor = visit(ctx.expresion());
@@ -133,8 +133,6 @@ public final class AnalizadorSemantico extends MiLenguajeBaseVisitor<String> {
     }
 
     @Override
-    // Controla que el return aparezca dentro de una funcion y que el valor
-    // retornado sea compatible con el tipo declarado por esa funcion.
     public String visitSentenciaReturn(MiLenguajeParser.SentenciaReturnContext ctx) {
         if (tipoRetorno == null) {
             error(ctx, "Sentencia return fuera de una funcion");
@@ -146,29 +144,19 @@ public final class AnalizadorSemantico extends MiLenguajeBaseVisitor<String> {
         return null;
     }
 
-    @Override
-    // Valida accesos a variables y arrays dentro de expresiones y devuelve el
-    // tipo resultante para seguir chequeando la expresion envolvente.
-    public String visitExprAcceso(MiLenguajeParser.ExprAccesoContext ctx) {
+    @Override public String visitExprAcceso(MiLenguajeParser.ExprAccesoContext ctx) {
         Simbolo simbolo = resolverAcceso(ctx.acceso(), false);
         return simbolo == null ? "error" : simbolo.getTipo();
     }
 
-    @Override
-    // Reusa la validacion de llamadas y propaga el tipo de retorno de la funcion.
-    public String visitExprLlamada(MiLenguajeParser.ExprLlamadaContext ctx) {
+    @Override public String visitExprLlamada(MiLenguajeParser.ExprLlamadaContext ctx) {
         return validarLlamada(ctx.llamada());
     }
 
-    @Override
-    // Valida una llamada usada como sentencia: existencia, cantidad de argumentos
-    // y compatibilidad de tipos en cada parametro.
-    public String visitLlamada(MiLenguajeParser.LlamadaContext ctx) {
+    @Override public String visitLlamada(MiLenguajeParser.LlamadaContext ctx) {
         return validarLlamada(ctx);
     }
 
-    // Comprueba que la funcion exista, que se invoque con la aridad correcta y
-    // que cada argumento respete el tipo esperado por su parametro.
     private String validarLlamada(MiLenguajeParser.LlamadaContext ctx) {
         Simbolo funcion = tabla.buscar(ctx.ID().getText(), ambito);
         if (funcion == null || funcion.getCategoria() != Simbolo.Categoria.FUNCION) {
@@ -192,8 +180,6 @@ public final class AnalizadorSemantico extends MiLenguajeBaseVisitor<String> {
         return funcion.getTipo();
     }
 
-    // Resuelve una variable o acceso a array, valida declaracion, categoria,
-    // uso correcto del indice y diferencia entre lectura y escritura.
     private Simbolo resolverAcceso(MiLenguajeParser.AccesoContext ctx, boolean escritura) {
         Simbolo simbolo = tabla.buscar(ctx.ID().getText(), ambito);
         if (simbolo == null) {
@@ -228,36 +214,47 @@ public final class AnalizadorSemantico extends MiLenguajeBaseVisitor<String> {
     @Override public String visitExprVerdadero(MiLenguajeParser.ExprVerdaderoContext ctx) { return "bool"; }
     @Override public String visitExprFalso(MiLenguajeParser.ExprFalsoContext ctx) { return "bool"; }
     @Override public String visitExprAgrupada(MiLenguajeParser.ExprAgrupadaContext ctx) { return visit(ctx.expresion()); }
-    // Exige un operando numerico y conserva su tipo para la expresion resultante.
+
     @Override public String visitExprNegativo(MiLenguajeParser.ExprNegativoContext ctx) {
         String tipo = visit(ctx.expresion());
         if (!esNumerico(tipo)) error(ctx, "El operador '-' requiere un operando numerico");
         return tipo;
     }
-    // Exige un operando booleano y produce siempre una expresion de tipo bool.
+
     @Override public String visitExprNot(MiLenguajeParser.ExprNotContext ctx) {
         String tipo = visit(ctx.expresion());
         if (!"bool".equals(tipo)) error(ctx, "El operador '!' requiere un operando bool");
         return "bool";
     }
-    @Override public String visitExprAditiva(MiLenguajeParser.ExprAditivaContext ctx) { return binariaNumerica(ctx, ctx.expresion()); }
-    @Override public String visitExprMultiplicativa(MiLenguajeParser.ExprMultiplicativaContext ctx) { return binariaNumerica(ctx, ctx.expresion()); }
+
+    @Override public String visitExprAditiva(MiLenguajeParser.ExprAditivaContext ctx) {
+        return binariaNumerica(ctx, ctx.expresion());
+    }
+
+    @Override public String visitExprMultiplicativa(MiLenguajeParser.ExprMultiplicativaContext ctx) {
+        return binariaNumerica(ctx, ctx.expresion());
+    }
+
     @Override public String visitExprRelacional(MiLenguajeParser.ExprRelacionalContext ctx) {
         binariaNumerica(ctx, ctx.expresion());
         return "bool";
     }
-    // Permite comparar tipos compatibles y produce un booleano como resultado.
+
     @Override public String visitExprIgualdad(MiLenguajeParser.ExprIgualdadContext ctx) {
         String izquierda = visit(ctx.expresion(0));
         String derecha = visit(ctx.expresion(1));
         if (!compatibles(izquierda, derecha)) error(ctx, "Tipos incompatibles en comparacion");
         return "bool";
     }
-    @Override public String visitExprAnd(MiLenguajeParser.ExprAndContext ctx) { return binariaLogica(ctx, ctx.expresion()); }
-    @Override public String visitExprOr(MiLenguajeParser.ExprOrContext ctx) { return binariaLogica(ctx, ctx.expresion()); }
 
-    // Verifica operaciones aritmeticas/relacionales entre operandos numericos y
-    // calcula el tipo resultante de la promocion numerica.
+    @Override public String visitExprAnd(MiLenguajeParser.ExprAndContext ctx) {
+        return binariaLogica(ctx, ctx.expresion());
+    }
+
+    @Override public String visitExprOr(MiLenguajeParser.ExprOrContext ctx) {
+        return binariaLogica(ctx, ctx.expresion());
+    }
+
     private String binariaNumerica(ParserRuleContext ctx, List<MiLenguajeParser.ExpresionContext> expresiones) {
         String izquierda = visit(expresiones.get(0));
         String derecha = visit(expresiones.get(1));
@@ -269,7 +266,6 @@ public final class AnalizadorSemantico extends MiLenguajeBaseVisitor<String> {
                 || "float".equals(izquierda) || "float".equals(derecha) ? "double" : "int";
     }
 
-    // Exige operandos booleanos para operadores logicos como && y ||.
     private String binariaLogica(ParserRuleContext ctx, List<MiLenguajeParser.ExpresionContext> expresiones) {
         String izquierda = visit(expresiones.get(0));
         String derecha = visit(expresiones.get(1));
@@ -279,26 +275,23 @@ public final class AnalizadorSemantico extends MiLenguajeBaseVisitor<String> {
         return "bool";
     }
 
-    // Centraliza el chequeo de compatibilidad entre el tipo destino y el tipo
-    // de la expresion que se intenta asignar o retornar.
     private void validarAsignacion(ParserRuleContext ctx, String destino, String origen) {
         if (!compatibles(destino, origen)) {
             error(ctx, "No se puede asignar un valor de tipo " + origen + " a " + destino);
         }
     }
 
-    // Define la regla de compatibilidad semantica: mismo tipo o conversion entre numericos.
     private boolean compatibles(String destino, String origen) {
         if ("error".equals(origen) || destino.equals(origen)) return true;
         return esNumerico(destino) && esNumerico(origen);
     }
 
-    // Resume que tipos participan en operaciones y conversiones numericas.
     private boolean esNumerico(String tipo) {
         return "int".equals(tipo) || "float".equals(tipo) || "double".equals(tipo);
     }
 
-    // Crea el objeto simbolo con la informacion semantica minima que se guarda en tabla.
+    // Helper importante: recibe nombre/tipo/categoria y usa el ctx para
+    // sacar linea y columna automaticamente.
     private Simbolo simbolo(String nombre, String tipo, Simbolo.Categoria categoria,
                             ParserRuleContext ctx, String scope, Integer tamanio,
                             List<String> parametros) {
@@ -306,7 +299,6 @@ public final class AnalizadorSemantico extends MiLenguajeBaseVisitor<String> {
                 ctx.getStart().getCharPositionInLine(), scope, tamanio, parametros);
     }
 
-    // Registra errores semanticos con ubicacion para mostrarlos luego en la salida final.
     private void error(ParserRuleContext ctx, String mensaje) {
         resultado.error(mensaje + " (linea " + ctx.getStart().getLine()
                 + ", columna " + ctx.getStart().getCharPositionInLine() + ")");

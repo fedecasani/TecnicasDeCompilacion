@@ -1,24 +1,22 @@
 // =====================================================================
-//  ANÁLISIS SINTÁCTICO - Mini Lenguaje tipo C++
-//  Proyecto educativo de Técnicas de Compilación
+// KIT DE APOYO PARA EXAMEN
+// Copia comentada de la gramatica principal.
 //
-//  Un archivo .g4 contiene DOS tipos de reglas:
-//    - Reglas del PARSER  (en minúscula): definen la ESTRUCTURA
-//    - Reglas del LEXER   (en MAYÚSCULA): definen los TOKENS
+// Idea central:
+// - Reglas en minuscula  -> parser -> estructura del lenguaje
+// - Reglas en MAYUSCULA  -> lexer  -> tokens
 //
-//  ANTLR4 genera automáticamente el Lexer y el Parser a partir
-//  de este archivo. ¡No hay que escribirlos a mano!
+// Donde conectas una regla define donde se puede usar:
+// - en elemento  -> nivel global
+// - en sentencia -> dentro de bloques
+// - en expresion -> dentro de expresiones
 // =====================================================================
 
 grammar MiLenguaje;
 
-
 // -------------------------------------------------------------------
-// REGLA INICIAL DEL PROGRAMA
+// REGLA RAIZ
 // -------------------------------------------------------------------
-// Si el profe pide agregar algo a nivel global, normalmente se toca:
-// - elemento
-// - o se agrega una nueva regla y se la referencia desde elemento
 programa
     : elemento* EOF
     ;
@@ -26,23 +24,22 @@ programa
 // -------------------------------------------------------------------
 // ELEMENTOS GLOBALES
 // -------------------------------------------------------------------
-// Hoy un programa puede tener funciones o declaraciones globales.
-// Si agregas algo como importaciones u otra construccion global,
-// suele agregarse aca.
-// Regla mental importante:
-// - si una construccion se agrega en elemento, se permite a nivel global
-// - si se agrega en sentencia, se permite dentro de bloques
-// - si se agrega en expresion, se puede usar dentro de expresiones
+// Si el profe pide una construccion global nueva, normalmente se toca aca.
+// Ejemplo ya practicado: importacion.
 elemento
     : funcion
     | declaracion
     | importacion
     ;
 
-
-
-//IMPORT
-
+// -------------------------------------------------------------------
+// IMPORT GLOBAL
+// -------------------------------------------------------------------
+// Ejemplo:
+// import "math";
+//
+// Si tambien quisieras permitirlo dentro de bloques,
+// habria que agregar `importacion` en `sentencia`.
 importacion
     : IMPORT CADENA PYC
     ;
@@ -50,8 +47,6 @@ importacion
 // -------------------------------------------------------------------
 // FUNCIONES Y PARAMETROS
 // -------------------------------------------------------------------
-// Esta zona define como se escribe una funcion.
-// Si cambia la sintaxis de funciones o parametros, suele tocarse aca.
 funcion
     : tipo ID PA parametros? PC bloque
     ;
@@ -67,13 +62,12 @@ parametro
 // -------------------------------------------------------------------
 // SENTENCIAS
 // -------------------------------------------------------------------
-// Esta es una de las reglas mas importantes.
-// Si agregas una sentencia nueva (por ejemplo do while o switch),
-// normalmente:
-// 1. creas una regla nueva
-// 2. la agregas aca
-// Todo lo que este conectado aca podra aparecer dentro de un bloque `{ ... }`.
-// Si algo no queres permitir dentro de funciones o bloques, no debe agregarse aca.
+// Si el profe pide agregar una instruccion nueva como:
+// - do while
+// - switch
+// - read
+// - print
+// se suele crear una regla nueva y colgarla aca.
 sentencia
     : declaracion
     | asignacion
@@ -91,8 +85,6 @@ sentencia
 // -------------------------------------------------------------------
 // DECLARACIONES Y ASIGNACIONES
 // -------------------------------------------------------------------
-// Si cambia como se declara una variable, array o asignacion,
-// normalmente se modifica esta zona.
 declaracion
     : tipo ID (CA INTEGER CC)? (IGUAL expresion)? PYC
     ;
@@ -108,8 +100,6 @@ sentenciaCout
 // -------------------------------------------------------------------
 // ESTRUCTURAS DE CONTROL
 // -------------------------------------------------------------------
-// Si el cambio pedido afecta if / while / for / return, se toca aca.
-// Para agregar una estructura nueva, suele crearse una regla similar.
 sentenciaIf
     : IF PA expresion PC bloque (ELSE bloque)?
     ;
@@ -121,6 +111,14 @@ sentenciaWhile
 sentenciaFor
     : FOR PA (declaracion | asignacion | PYC) expresion? PYC asignacionFor? PC bloque
     ;
+
+// Plantilla util para examen:
+//
+// sentenciaDoWhile
+//     : DO bloque WHILE PA expresion PC PYC
+//     ;
+//
+// Si la agregas, no olvides conectarla en `sentencia`.
 
 asignacionFor
     : acceso IGUAL expresion
@@ -135,11 +133,11 @@ bloque
     ;
 
 // -------------------------------------------------------------------
-// TIPOS DE DATOS
+// TIPOS
 // -------------------------------------------------------------------
-// Si agregas un tipo nuevo (por ejemplo long), normalmente:
-// 1. agregas un token nuevo abajo en la parte lexica
-// 2. lo agregas aca en tipo
+// Si el profe pide un tipo nuevo, agregar:
+// 1. el token abajo
+// 2. el nombre aca
 tipo
     : INT
     | FLOAT
@@ -153,14 +151,8 @@ tipo
 // -------------------------------------------------------------------
 // EXPRESIONES
 // -------------------------------------------------------------------
-// Esta regla define operadores, precedencia y literales.
-// Si agregas:
-// - un operador nuevo
-// - una forma nueva de expresion
-// - un literal nuevo
-// probablemente se toca esta zona y tambien la parte lexica.
-// Todo lo que conectes aca podra usarse dentro de otras expresiones,
-// asignaciones, condiciones de if/while, argumentos, etc.
+// Esta regla controla que cosas pueden actuar como expresion
+// y tambien la precedencia de operadores.
 expresion
     : RES expresion                                                     # exprNegativo
     | NOT expresion                                                     # exprNot
@@ -182,9 +174,8 @@ expresion
     ;
 
 // -------------------------------------------------------------------
-// LLAMADAS Y ARGUMENTOS
+// LLAMADAS Y ACCESOS
 // -------------------------------------------------------------------
-// Si cambia como se invocan funciones, se toca esta zona.
 llamada
     : ID PA argumentos? PC
     ;
@@ -198,10 +189,8 @@ acceso
     ;
 
 // -------------------------------------------------------------------
-// TOKENS DE PUNTUACION Y DELIMITADORES
+// PUNTUACION
 // -------------------------------------------------------------------
-// Esta parte ya es del lexer.
-// Si agregas simbolos nuevos como :, ++, --, etc., se tocan estas reglas.
 PA   : '(';
 PC   : ')';
 CA   : '[';
@@ -229,11 +218,11 @@ AND        : '&&';
 NOT        : '!';
 
 // -------------------------------------------------------------------
-// PALABRAS RESERVADAS
+// KEYWORDS
 // -------------------------------------------------------------------
-// Si agregas una keyword nueva como import, switch, case, do, etc.,
-// normalmente se crea un token aca y luego se usa arriba en una regla
-// sintactica.
+// Si agregas una palabra reservada nueva, normalmente:
+// 1. agregas el token aca
+// 2. la usas en una regla del parser arriba
 FOR      : 'for';
 WHILE    : 'while';
 IF       : 'if';
@@ -243,6 +232,16 @@ BREAK    : 'break';
 CONTINUE : 'continue';
 COUT     : 'cout';
 IMPORT   : 'import';
+
+// Plantillas para cambios tipicos:
+// DO       : 'do';
+// SWITCH   : 'switch';
+// CASE     : 'case';
+// DEFAULT  : 'default';
+// LONG     : 'long';
+// READ     : 'read';
+// PRINT    : 'print';
+// CONST    : 'const';
 
 INT         : 'int';
 FLOAT       : 'float';
@@ -257,20 +256,55 @@ FALSO       : 'false';
 // -------------------------------------------------------------------
 // IDENTIFICADORES Y LITERALES
 // -------------------------------------------------------------------
-// Si el cambio es sobre numeros, strings, chars o formato de nombres,
-// se toca esta zona del lexer.
 ID        : [A-Za-z_] [A-Za-z0-9_]*;
 DECIMAL   : [0-9]+ '.' [0-9]+;
 INTEGER   : [0-9]+;
 CHARACTER : '\'' (~['\\\r\n] | '\\' .) '\'';
 CADENA    : '"' (~["\\\r\n] | '\\' .)* '"';
 
+// Plantillas utiles de regex lexica para examen:
+//
+// Hexadecimal:
+// HEX       : '0' [xX] [0-9a-fA-F]+;
+//
+// Binario:
+// BINARIO   : '0' [bB] [01]+;
+//
+// Octal:
+// OCTAL     : '0' [0-7]+;
+//
+// Decimal con signo:
+// ENTERO_SIGNADO : [+-]? [0-9]+;
+//
+// Real con exponente:
+// CIENTIFICO : [0-9]+ ('.' [0-9]+)? [eE] [+-]? [0-9]+;
+//
+// Identificador que permita $:
+// ID_DOLAR  : [A-Za-z_$] [A-Za-z0-9_$]*;
+//
+// Ruta de import mas restringida:
+// RUTA_MODULO : '"' [A-Za-z_./] [A-Za-z0-9_./-]* '"';
+//
+// String sin escapes:
+// CADENA_SIMPLE : '"' ~["\r\n]* '"';
+//
+// Bool como token unico:
+// BOOLEANO  : 'true' | 'false';
+
+// Operadores nuevos que podrian pedir:
+// INCREMENTO   : '++';
+// DECREMENTO   : '--';
+// MAS_IGUAL    : '+=';
+// MENOS_IGUAL  : '-=';
+// POR_IGUAL    : '*=';
+// DIV_IGUAL    : '/=';
+// POTENCIA     : '^';
+// DOS_PUNTOS   : ':';
+// PREGUNTA     : '?';
+
 // -------------------------------------------------------------------
-// ESPACIOS, COMENTARIOS Y ERRORES LEXICOS
+// COMENTARIOS, ESPACIOS Y TOKEN DE ERROR
 // -------------------------------------------------------------------
-// WS y comentarios se ignoran.
-// OTRO captura cualquier caracter no reconocido y permite reportar
-// errores lexicos en App.java.
 COMENTARIO_LINEA  : '//' ~[\r\n]* -> skip;
 COMENTARIO_BLOQUE : '/*' .*? '*/' -> skip;
 WS                : [ \r\n\t]+ -> skip;

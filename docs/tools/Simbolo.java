@@ -4,8 +4,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+// Copia de apoyo.
+// Si queres que una construccion nueva aparezca prolija en tabla,
+// muchas veces hay que agregar una categoria nueva aca.
 public final class Simbolo {
-    public enum Categoria { VARIABLE, PARAMETRO, FUNCION, RETURN }
+    public enum Categoria { VARIABLE, PARAMETRO, FUNCION, IMPORT }
 
     private final String nombre;
     private final String tipo;
@@ -45,6 +48,9 @@ public final class Simbolo {
     public String detalles() {
         if (categoria == Categoria.FUNCION) {
             return "[private] " + parametros;
+        }
+        if (categoria == Categoria.IMPORT) {
+            return "[modulo]";
         }
         if (tamanioArray != null) {
             return "[arr:" + tamanioArray + "] [private]";
